@@ -15,7 +15,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 // Mock Expo modules
 jest.mock('expo-constants', () => ({
-  Constants: { manifest: { extra: {} } }
+  Constants: { manifest: { extra: {} } },
 }));
 
 // Mock react-native's Dimensions
@@ -39,6 +39,12 @@ jest.mock('react-native-reanimated', () => {
   Reanimated.default.call = () => {};
   return Reanimated;
 });
+
+// Mock react-native-google-mobile-ads
+jest.mock('react-native-google-mobile-ads', () => require('./__tests__/mocks/googleMobileAdsMock'));
+
+// Mock AdBanner for tests
+jest.mock('@/app/components/AdBanner', () => require('./__tests__/mocks/AdBannerMock'));
 
 // Create a simple fetch mock
 global.fetch = jest.fn(() =>
