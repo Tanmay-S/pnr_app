@@ -18,6 +18,7 @@ jest.mock('@/app/hooks/useRecentPNRSearches', () => ({
 jest.mock('@/app/components/PNRInput', () => 'PNRInput');
 jest.mock('@/app/components/PNRStatusCard', () => 'PNRStatusCard');
 jest.mock('@/app/components/RecentPNR', () => 'RecentPNR');
+jest.mock('@/app/components/AdBanner', () => ({ AdBanner: 'AdBanner' }));
 jest.mock('@/app/components/FavoriteTrains', () => ({ FavoriteTrains: 'FavoriteTrains' }));
 
 describe('PNRStatusScreen', () => {
@@ -55,10 +56,10 @@ describe('PNRStatusScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock the service
     (pnrService.fetchPNRStatus as jest.Mock).mockResolvedValue(mockPNRData);
-    
+
     // Mock the hook
     (useRecentPNRSearchesHook.useRecentPNRSearches as jest.Mock).mockReturnValue({
       recentSearches: mockRecentSearches,
@@ -75,19 +76,19 @@ describe('PNRStatusScreen', () => {
   });
 
   it('should handle PNR submission and display results', async () => {
-    const { getByText, getByTestId, queryByTestId, UNSAFE_getByType } = render(<PNRStatusScreen />);
-    
+    const { UNSAFE_getByType } = render(<PNRStatusScreen />); // Removed getByText, getByTestId, queryByTestId
+
     // Find PNRInput component and simulate submission
     const pnrInput = UNSAFE_getByType('PNRInput' as any);
-    
+
     // Call the onSubmit prop
     await act(async () => {
       pnrInput.props.onSubmit('1234567890');
     });
-    
+
     // Verify service was called
     expect(pnrService.fetchPNRStatus).toHaveBeenCalledWith('1234567890');
-    
+
     // Verify recent search was added
     expect(mockAddRecentSearch).toHaveBeenCalledWith('1234567890');
   });
@@ -95,32 +96,32 @@ describe('PNRStatusScreen', () => {
   it('should handle errors when fetching PNR status', async () => {
     // Mock service to throw an error
     (pnrService.fetchPNRStatus as jest.Mock).mockRejectedValue(new Error('Network error'));
-    
+
     const { UNSAFE_getByType, findByText } = render(<PNRStatusScreen />);
-    
+
     // Find PNRInput component and simulate submission
     const pnrInput = UNSAFE_getByType('PNRInput' as any);
-    
+
     // Call the onSubmit prop
     await act(async () => {
       pnrInput.props.onSubmit('1234567890');
     });
-    
+
     // Verify error handling
     expect(await findByText('Failed to fetch PNR details. Please try again.')).toBeTruthy();
   });
 
   it('should handle selection from recent searches', async () => {
     const { UNSAFE_getByType } = render(<PNRStatusScreen />);
-    
+
     // Find RecentPNR component and simulate selection
     const recentPNR = UNSAFE_getByType('RecentPNR' as any);
-    
+
     // Call the onSelect prop
     await act(async () => {
       recentPNR.props.onSelect('0987654321');
     });
-    
+
     // Verify service was called with the selected PNR
     expect(pnrService.fetchPNRStatus).toHaveBeenCalledWith('0987654321');
   });

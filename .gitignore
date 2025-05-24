@@ -36,4 +36,18 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# coverage reports
+coverage/
+
+# Husky and git hooks
+.husky/
+
+# Lint and formatting
+.lintstagedrc.json
+.prettierignore
+.prettierrc
+
+# GitHub workflows
+.github/
+
 app-example
