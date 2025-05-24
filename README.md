@@ -55,8 +55,8 @@ __tests__/           # Test files
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/pnr-status-tracker.git
-cd pnr-status-tracker
+git clone https://github.com/yourusername/pnr_app.git
+cd pnr_app
 ```
 
 2. Install dependencies:
