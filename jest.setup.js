@@ -1,5 +1,5 @@
-// Import React Native Paper mock
-require('./__tests__/mocks/reactNativePaperMock');
+// Mock react-native-paper
+jest.mock('react-native-paper', () => require('./__tests__/mocks/reactNativePaperMock').default);
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -21,15 +21,6 @@ jest.mock('expo-constants', () => ({
 // Mock react-native's Dimensions
 jest.mock('react-native', () => {
   const reactNative = jest.requireActual('react-native');
-  reactNative.NativeModules.StatusBarManager = { getHeight: jest.fn() };
-  reactNative.Dimensions = {
-    get: jest.fn().mockReturnValue({
-      width: 375,
-      height: 812,
-      scale: 2,
-      fontScale: 1,
-    }),
-  };
   return reactNative;
 });
 
@@ -42,9 +33,6 @@ jest.mock('react-native-reanimated', () => {
 
 // Mock react-native-google-mobile-ads
 jest.mock('react-native-google-mobile-ads', () => require('./__tests__/mocks/googleMobileAdsMock'));
-
-// Mock AdBanner for tests
-jest.mock('@/app/components/AdBanner', () => require('./__tests__/mocks/AdBannerMock'));
 
 // Create a simple fetch mock
 global.fetch = jest.fn(() =>

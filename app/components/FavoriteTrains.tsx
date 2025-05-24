@@ -24,7 +24,7 @@ interface FavoriteTrainsProps {
   onCheckPNR: () => void;
 }
 
-export const FavoriteTrains: React.FC<FavoriteTrainsProps> = ({ onCheckPNR }) => {
+const FavoriteTrains: React.FC<FavoriteTrainsProps> = ({ onCheckPNR }) => {
   const [favorites, setFavorites] = useState(FAVORITE_TRAINS);
 
   const removeFavorite = (id: string) => {
@@ -36,11 +36,7 @@ export const FavoriteTrains: React.FC<FavoriteTrainsProps> = ({ onCheckPNR }) =>
       <Card style={styles.emptyCard}>
         <Card.Content>
           <Text style={styles.emptyText}>No favorite trains added yet</Text>
-          <Button 
-            mode="contained" 
-            onPress={onCheckPNR}
-            style={styles.checkPNRButton}
-          >
+          <Button mode="contained" onPress={onCheckPNR} style={styles.checkPNRButton}>
             Check PNR Status
           </Button>
         </Card.Content>
@@ -144,3 +140,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
+
+export { FavoriteTrains };
+export default FavoriteTrains;

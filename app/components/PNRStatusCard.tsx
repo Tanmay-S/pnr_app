@@ -7,26 +7,26 @@ interface PNRStatusCardProps {
   data: PNRData;
 }
 
-const PNRStatusCard: React.FC<PNRStatusCardProps> = ({ data }) => {
-  // Helper function to get color based on status
-  const getStatusColor = (status: string) => {
-    if (status.includes('CNF') || status.includes('Confirmed')) {
-      return '#4CAF50'; // Green for confirmed
-    } else if (status.includes('WL') || status.includes('Waitlist')) {
-      return '#FF9800'; // Orange for waitlist
-    } else if (status.includes('RAC')) {
-      return '#2196F3'; // Blue for RAC
-    } else {
-      return '#F44336'; // Red for others (cancelled, etc)
-    }
-  };
+// Helper function to get color based on status
+export const getStatusColor = (status: string) => {
+  if (status.includes('CNF') || status.includes('Confirmed')) {
+    return '#4CAF50'; // Green for confirmed
+  } else if (status.includes('WL') || status.includes('Waitlist')) {
+    return '#FF9800'; // Orange for waitlist
+  } else if (status.includes('RAC')) {
+    return '#2196F3'; // Blue for RAC
+  } else {
+    return '#F44336'; // Red for others (cancelled, etc)
+  }
+};
 
+const PNRStatusCard: React.FC<PNRStatusCardProps> = ({ data }) => {
   return (
     <ScrollView style={styles.container}>
       <Card style={styles.card}>
-        <Card.Title 
-          title={`PNR: ${data.pnrNumber}`} 
-          subtitle={`Train: ${data.trainNumber} - ${data.trainName}`} 
+        <Card.Title
+          title={`PNR: ${data.pnrNumber}`}
+          subtitle={`Train: ${data.trainNumber} - ${data.trainName}`}
         />
         <Card.Content>
           <View style={styles.journeyInfoContainer}>
@@ -35,12 +35,12 @@ const PNRStatusCard: React.FC<PNRStatusCardProps> = ({ data }) => {
               <Text style={styles.code}>{data.from.code}</Text>
               <Text style={styles.time}>{data.from.departureTime}</Text>
             </View>
-            
+
             <View style={styles.journeyLine}>
               <View style={styles.line} />
               <Text style={styles.dateText}>{data.dateOfJourney}</Text>
             </View>
-            
+
             <View style={styles.stationContainer}>
               <Text style={styles.station}>{data.to.station}</Text>
               <Text style={styles.code}>{data.to.code}</Text>
@@ -49,7 +49,7 @@ const PNRStatusCard: React.FC<PNRStatusCardProps> = ({ data }) => {
           </View>
 
           <Divider style={styles.divider} />
-          
+
           <View style={styles.detailsContainer}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Class:</Text>
@@ -62,7 +62,7 @@ const PNRStatusCard: React.FC<PNRStatusCardProps> = ({ data }) => {
           </View>
 
           <Divider style={styles.divider} />
-          
+
           <Text style={styles.passengersTitle}>Passenger Status</Text>
           {data.passengerStatus.map((passenger, index) => (
             <List.Item
@@ -76,7 +76,7 @@ const PNRStatusCard: React.FC<PNRStatusCardProps> = ({ data }) => {
                   </View>
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>Current Status:</Text>
-                    <Chip 
+                    <Chip
                       textStyle={{ color: 'white' }}
                       style={{ backgroundColor: getStatusColor(passenger.currentStatus) }}
                     >
@@ -85,7 +85,9 @@ const PNRStatusCard: React.FC<PNRStatusCardProps> = ({ data }) => {
                   </View>
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>Coach/Berth:</Text>
-                    <Text>{passenger.coach}, {passenger.berth}</Text>
+                    <Text>
+                      {passenger.coach}, {passenger.berth}
+                    </Text>
                   </View>
                 </View>
               }

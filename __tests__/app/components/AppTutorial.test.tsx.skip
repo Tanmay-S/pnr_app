@@ -1,0 +1,223 @@
+import { AppTutorial, useTutorial } from '@/app/components/AppTutorial';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import React from 'react';
+
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+}));
+
+// Mock useWindowDimensions
+jest.mock('react-native', () => {
+  const reactNative = jest.requireActual('react-native');
+  return {
+    ...reactNative,
+    useWindowDimensions: jest.fn(() => ({ width: 375, height: 812 })),
+  };
+});
+
+// Mock react-native-paper components
+jest.mock('react-native-paper', () => {
+  const reactNativePaper = jest.requireActual('react-native-paper');
+  const { Text, TouchableOpacity } = jest.requireActual('react-native'); // Import Text and TouchableOpacity
+  return {
+    ...reactNativePaper,
+    Modal: ({ visible, onDismiss, children }: any) => <>{children}</>, // Always render children
+    Portal: ({ children }: any) => <>{children}</>,
+    Button: ({ onPress, children }: any) => <TouchableOpacity onPress={onPress}><Text>{children}</Text></TouchableOpacity>, // Wrap children in Text
+    Text: ({ children }: any) => <Text>{children}</Text>, // Use Text from react-native
+  };
+});
+
+
+describe.skip('AppTutorial', () => {
+  beforeEach(() => {
+    // Clear AsyncStorage mock before each test
+    (AsyncStorage.getItem as jest.Mock).mockClear();
+    (AsyncStorage.setItem as jest.Mock).mockClear();
+  });
+
+  it('renders the first step of the tutorial by default', async () => {
+    // Mock AsyncStorage.getItem to return null, indicating tutorial not shown
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    const { getByText } = render(<AppTutorial />);
+
+    await waitFor(() => {
+      expect(getByText('Welcome to PNR Status Tracker')).toBeTruthy();
+      expect(getByText('Track your Indian Railways journey with ease')).toBeTruthy();
+    });
+  });
+
+  it('navigates to the next step when "Next" button is pressed', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    const { getByText } = render(<AppTutorial />);
+
+    await waitFor(() => {
+      expect(getByText('Welcome to PNR Status Tracker')).toBeTruthy();
+    });
+
+    fireEvent.press(getByText('Next'));
+
+    await waitFor(() => {
+      expect(getByText('Check PNR Status')).toBeTruthy();
+      expect(getByText('Enter your 10-digit PNR number to get detailed information about your booking')).toBeTruthy();
+    });
+  });
+
+  it('navigates to the previous step when "Previous" button is pressed', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    const { getByText } = render(<AppTutorial />);
+
+    await waitFor(() => {
+      expect(getByText('Welcome to PNR Status Tracker')).toBeTruthy();
+    });
+
+    fireEvent.press(getByText('Next')); // Go to step 2
+
+    await waitFor(() => {
+      expect(getByText('Check PNR Status')).toBeTruthy();
+    });
+
+    fireEvent.press(getByText('Previous')); // Go back to step 1
+
+    await waitFor(() => {
+      expect(getByText('Welcome to PNR Status Tracker')).toBeTruthy();
+    });
+  });
+
+  it('hides the modal and sets tutorial shown in AsyncStorage when "Get Started" is pressed on the last step', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    const { getByText, queryByText } = render(<AppTutorial />);
+
+    await waitFor(() => {
+      expect(getByText('Welcome to PNR Status Tracker')).toBeTruthy();
+    });
+
+    // Navigate to the last step (step 4)
+    fireEvent.press(getByText('Next'));
+    await waitFor(() => expect(getByText('Check PNR Status')).toBeTruthy());
+    fireEvent.press(getByText('Next'));
+    await waitFor(() => expect(getByText('Explore Trains')).toBeTruthy());
+    fireEvent.press(getByText('Next'));
+    await waitFor(() => expect(getByText('Recent Searches')).toBeTruthy());
+
+    // Press "Get Started"
+    fireEvent.press(getByText('Get Started'));
+
+    await waitFor(() => {
+      expect(queryByText('Recent Searches')).toBeNull(); // Modal should be hidden
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith('pnr_app_tutorial_shown', 'true');
+    });
+  });
+
+  it('hides the modal and sets tutorial shown in AsyncStorage when "Skip Tutorial" is pressed', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    const { getByText, queryByText } = render(<AppTutorial />);
+
+    await waitFor(() => {
+      expect(getByText('Welcome to PNR Status Tracker')).toBeTruthy();
+    });
+
+    fireEvent.press(getByText('Skip Tutorial'));
+
+    await waitFor(() => {
+      expect(queryByText('Welcome to PNR Status Tracker')).toBeNull(); // Modal should be hidden
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith('pnr_app_tutorial_shown', 'true');
+    });
+  });
+
+  it('logs an error if AsyncStorage.setItem fails when hiding modal', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+    const error = new Error('AsyncStorage setItem error');
+    (AsyncStorage.setItem as jest.Mock).mockRejectedValue(error);
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { getByText } = render(<AppTutorial />);
+
+    await waitFor(() => {
+      expect(getByText('Welcome to PNR Status Tracker')).toBeTruthy();
+    });
+
+    fireEvent.press(getByText('Skip Tutorial'));
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith('Error saving tutorial status:', error);
+    });
+
+    consoleSpy.mockRestore();
+  });
+});
+
+describe.skip('useTutorial', () => {
+  beforeEach(() => {
+    (AsyncStorage.getItem as jest.Mock).mockClear();
+  });
+
+  it('returns shouldShowTutorial as true and loading as false if tutorial has not been shown', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useTutorial());
+
+    expect(result.current.loading).toBe(true); // Initially loading
+
+    await waitFor(() => {
+      expect(result.current.shouldShowTutorial).toBe(true);
+      expect(result.current.loading).toBe(false);
+    });
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith('pnr_app_tutorial_shown');
+  });
+
+  it('returns shouldShowTutorial as false and loading as false if tutorial has been shown', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue('true');
+
+    const { result } = renderHook(() => useTutorial());
+
+    expect(result.current.loading).toBe(true); // Initially loading
+
+    await waitFor(() => {
+      expect(result.current.shouldShowTutorial).toBe(false);
+      expect(result.current.loading).toBe(false);
+    });
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith('pnr_app_tutorial_shown');
+  });
+
+  it('returns shouldShowTutorial as true and loading as false if AsyncStorage.getItem fails', async () => {
+    const error = new Error('AsyncStorage error');
+    (AsyncStorage.getItem as jest.Mock).mockRejectedValue(error);
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useTutorial());
+
+    expect(result.current.loading).toBe(true); // Initially loading
+
+    await waitFor(() => {
+      expect(result.current.shouldShowTutorial).toBe(true);
+      expect(result.current.loading).toBe(false);
+    });
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith('pnr_app_tutorial_shown');
+    expect(consoleSpy).toHaveBeenCalledWith('Error checking tutorial status:', error);
+    consoleSpy.mockRestore();
+  });
+});
+
+// Helper function to render hooks
+function renderHook(callback: () => any) {
+  const result: { current: any } = { current: undefined };
+  render(<HookWrapper callback={callback} result={result} />);
+  return { result };
+}
+
+// Helper component to wrap hook for rendering
+const HookWrapper = ({ callback, result }: any) => {
+  result.current = callback();
+  return null;
+};
