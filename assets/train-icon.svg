@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="256" fill="#1A237E"/>
+  
+  <!-- Train Track -->
+  <rect x="100" y="700" width="824" height="30" rx="15" fill="#9E9E9E"/>
+  <rect x="100" y="750" width="824" height="30" rx="15" fill="#9E9E9E"/>
+  
+  <!-- Sleepers -->
+  <rect x="150" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+  <rect x="250" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+  <rect x="350" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+  <rect x="450" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+  <rect x="550" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+  <rect x="650" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+  <rect x="750" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+  <rect x="850" y="700" width="30" height="80" rx="5" fill="#5D4037"/>
+
+  <!-- Train Body -->
+  <rect x="250" y="350" width="600" height="250" rx="40" fill="#F44336"/>
+  
+  <!-- Train Front -->
+  <path d="M250 450H150C150 400 200 350 250 350V450Z" fill="#F44336"/>
+  
+  <!-- Windows -->
+  <rect x="300" y="400" width="100" height="100" rx="20" fill="#BBDEFB"/>
+  <rect x="450" y="400" width="100" height="100" rx="20" fill="#BBDEFB"/>
+  <rect x="600" y="400" width="100" height="100" rx="20" fill="#BBDEFB"/>
+  <rect x="750" y="400" width="50" height="100" rx="20" fill="#BBDEFB"/>
+  
+  <!-- Wheels -->
+  <circle cx="300" cy="650" r="50" fill="#424242"/>
+  <circle cx="300" cy="650" r="20" fill="#9E9E9E"/>
+  <circle cx="450" cy="650" r="50" fill="#424242"/>
+  <circle cx="450" cy="650" r="20" fill="#9E9E9E"/>
+  <circle cx="650" cy="650" r="50" fill="#424242"/>
+  <circle cx="650" cy="650" r="20" fill="#9E9E9E"/>
+  <circle cx="800" cy="650" r="50" fill="#424242"/>
+  <circle cx="800" cy="650" r="20" fill="#9E9E9E"/>
+  
+  <!-- Headlight -->
+  <circle cx="170" cy="400" r="30" fill="#FFEB3B"/>
+  <circle cx="170" cy="400" r="20" fill="#FFF9C4"/>
+  
+  <!-- PNR Text -->
+  <text x="512" y="320" font-family="Arial" font-size="150" font-weight="bold" fill="white" text-anchor="middle">PNR</text>
+</svg>
