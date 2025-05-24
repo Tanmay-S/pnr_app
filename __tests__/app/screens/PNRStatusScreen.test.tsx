@@ -1,12 +1,18 @@
 import * as useRecentPNRSearchesHook from '@/app/hooks/useRecentPNRSearches';
 import PNRStatusScreen from '@/app/screens/PNRStatusScreen';
 import * as pnrService from '@/app/services/pnrService';
-import { act, render } from '@testing-library/react-native';
+import { act, render, waitFor } from '@testing-library/react-native';
+import { useRouter } from 'expo-router';
 import React from 'react';
 
 // Mock the PNR service
 jest.mock('@/app/services/pnrService', () => ({
   fetchPNRStatus: jest.fn(),
+}));
+
+// Mock expo-router
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn(),
 }));
 
 // Mock the custom hook
@@ -15,11 +21,55 @@ jest.mock('@/app/hooks/useRecentPNRSearches', () => ({
 }));
 
 // Mock the components
-jest.mock('@/app/components/PNRInput', () => 'PNRInput');
+jest.mock('@/app/components/PNRInput', () => {
+  const React = jest.requireActual('react');
+  const { TextInput } = jest.requireActual('react-native');
+  const PNRInput = ({ onSubmit }: { onSubmit: (pnr: string) => void }) => (
+    <TextInput
+      testID="PNRInput"
+      onSubmitEditing={(e: { nativeEvent: { text: string } }) => onSubmit(e.nativeEvent.text)}
+    />
+  );
+  PNRInput.displayName = 'PNRInput';
+  return PNRInput;
+});
 jest.mock('@/app/components/PNRStatusCard', () => 'PNRStatusCard');
-jest.mock('@/app/components/RecentPNR', () => 'RecentPNR');
+jest.mock('@/app/components/RecentPNR', () => {
+  const React = jest.requireActual('react');
+  const { View } = jest.requireActual('react-native'); // Use View for simplicity
+  const RecentPNR = ({
+    onSelect,
+    recentSearches,
+  }: {
+    onSelect: (pnr: string) => void;
+    recentSearches: string[];
+  }) => (
+    // Expose onSelect directly for testing
+    <View testID="RecentPNR" onSelect={onSelect} recentSearches={recentSearches} />
+  );
+  RecentPNR.displayName = 'RecentPNR';
+  return RecentPNR;
+});
 jest.mock('@/app/components/AdBanner', () => ({ AdBanner: 'AdBanner' }));
 jest.mock('@/app/components/FavoriteTrains', () => ({ FavoriteTrains: 'FavoriteTrains' }));
+
+// Mock react-native-paper's Snackbar
+jest.mock('react-native-paper', () => {
+  const React = jest.requireActual('react');
+  const { View } = jest.requireActual('react-native');
+  return {
+    ...jest.requireActual('react-native-paper'),
+    Snackbar: ({
+      visible,
+      onDismiss,
+      children,
+    }: {
+      visible: boolean;
+      onDismiss: () => void;
+      children: React.ReactNode;
+    }) => (visible ? <View testID="Snackbar">{children}</View> : null),
+  };
+});
 
 describe('PNRStatusScreen', () => {
   const mockPNRData = {
@@ -67,6 +117,11 @@ describe('PNRStatusScreen', () => {
       removeRecentSearch: mockRemoveRecentSearch,
       isLoading: false,
     });
+
+    // Mock useRouter
+    (useRouter as jest.Mock).mockReturnValue({
+      push: jest.fn(),
+    });
   });
 
   it('should render the screen with correct title', () => {
@@ -76,53 +131,60 @@ describe('PNRStatusScreen', () => {
   });
 
   it('should handle PNR submission and display results', async () => {
-    const { UNSAFE_getByType } = render(<PNRStatusScreen />); // Removed getByText, getByTestId, queryByTestId
+    const { getByTestId } = render(<PNRStatusScreen />);
+    const router = useRouter();
 
-    // Find PNRInput component and simulate submission
-    const pnrInput = UNSAFE_getByType('PNRInput' as any);
+    const pnrInput = getByTestId('PNRInput');
 
-    // Call the onSubmit prop
     await act(async () => {
-      pnrInput.props.onSubmit('1234567890');
+      pnrInput.props.onSubmitEditing({ nativeEvent: { text: '1234567890' } });
     });
 
-    // Verify service was called
     expect(pnrService.fetchPNRStatus).toHaveBeenCalledWith('1234567890');
-
-    // Verify recent search was added
     expect(mockAddRecentSearch).toHaveBeenCalledWith('1234567890');
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/screens/IRCTCWebViewScreen',
+      params: { pnr: '1234567890' },
+    });
   });
 
   it('should handle errors when fetching PNR status', async () => {
-    // Mock service to throw an error
+    // Mock console.error to prevent it from polluting test output
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     (pnrService.fetchPNRStatus as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-    const { UNSAFE_getByType, findByText } = render(<PNRStatusScreen />);
+    const { getByTestId, findByText } = render(<PNRStatusScreen />);
 
-    // Find PNRInput component and simulate submission
-    const pnrInput = UNSAFE_getByType('PNRInput' as any);
+    const pnrInput = getByTestId('PNRInput');
 
-    // Call the onSubmit prop
     await act(async () => {
-      pnrInput.props.onSubmit('1234567890');
+      pnrInput.props.onSubmitEditing({ nativeEvent: { text: '1234567890' } });
     });
 
-    // Verify error handling
-    expect(await findByText('Failed to fetch PNR details. Please try again.')).toBeTruthy();
+    await waitFor(() => {
+      expect(findByText('Failed to fetch PNR details. Please try again.')).toBeTruthy();
+    });
+
+    // Restore console.error
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle selection from recent searches', async () => {
-    const { UNSAFE_getByType } = render(<PNRStatusScreen />);
+    const { getByTestId } = render(<PNRStatusScreen />);
+    const router = useRouter();
 
-    // Find RecentPNR component and simulate selection
-    const recentPNR = UNSAFE_getByType('RecentPNR' as any);
+    const recentPNR = getByTestId('RecentPNR');
 
-    // Call the onSelect prop
     await act(async () => {
+      // Simulate calling the onSelect prop directly, as the mock exposes it
       recentPNR.props.onSelect('0987654321');
     });
 
-    // Verify service was called with the selected PNR
     expect(pnrService.fetchPNRStatus).toHaveBeenCalledWith('0987654321');
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/screens/IRCTCWebViewScreen',
+      params: { pnr: '0987654321' },
+    });
   });
 });

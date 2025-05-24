@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Snackbar, Text } from 'react-native-paper';
@@ -8,10 +9,11 @@ import PNRInput from '@/app/components/PNRInput';
 import PNRStatusCard from '@/app/components/PNRStatusCard';
 import RecentPNR from '@/app/components/RecentPNR';
 import { useRecentPNRSearches } from '@/app/hooks/useRecentPNRSearches';
-import { fetchPNRStatus, PNRData } from '@/app/services/pnrService';
 import { interstitialAdManager } from '@/app/services/adService';
+import { fetchPNRStatus, PNRData } from '@/app/services/pnrService'; // Import fetchPNRStatus
 
 export default function PNRStatusScreen() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [pnrData, setPnrData] = useState<PNRData | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -22,20 +24,24 @@ export default function PNRStatusScreen() {
   const handleCheckPNR = async (pnrNumber: string) => {
     setLoading(true);
     setErrorMessage('');
+    setSnackbarVisible(false);
 
     try {
       const data = await fetchPNRStatus(pnrNumber);
       setPnrData(data);
-      addRecentSearch(pnrNumber);
-
-      // Trigger interstitial ad after PNR search
-      interstitialAdManager.onPNRSearch();
+      addRecentSearch(pnrNumber); // Add to recent searches on successful fetch
+      router.push({
+        pathname: '/screens/IRCTCWebViewScreen' as any,
+        params: { pnr: pnrNumber },
+      });
     } catch (error) {
-      console.error('Error checking PNR:', error);
+      console.error('Failed to fetch PNR:', error);
       setErrorMessage('Failed to fetch PNR details. Please try again.');
       setSnackbarVisible(true);
+      setPnrData(null);
     } finally {
       setLoading(false);
+      interstitialAdManager.onPNRSearch(); // Trigger ad regardless of success/failure
     }
   };
 
@@ -58,7 +64,7 @@ export default function PNRStatusScreen() {
           <AdBanner style={styles.adContainer} />
         </>
       ) : (
-        <FavoriteTrains onCheckPNR={() => {}} />
+        <FavoriteTrains onCheckPNR={() => {}} /> // Revert to original empty function
       )}
 
       <RecentPNR

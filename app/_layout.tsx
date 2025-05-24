@@ -20,16 +20,23 @@ export default function RootLayout() {
   }
 
   // Create Paper theme with primary colors matching Indian Railways
-  const paperTheme = 
+  const paperTheme =
     colorScheme === 'dark'
-      ? { ...MD3DarkTheme, colors: { ...MD3DarkTheme.colors, primary: '#1A237E' }}
-      : { ...MD3LightTheme, colors: { ...MD3LightTheme.colors, primary: '#1A237E' }};
+      ? { ...MD3DarkTheme, colors: { ...MD3DarkTheme.colors, primary: '#1A237E' } }
+      : { ...MD3LightTheme, colors: { ...MD3LightTheme.colors, primary: '#1A237E' } };
 
   return (
     <PaperProvider theme={paperTheme}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="screens/IRCTCWebViewScreen"
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+            }}
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />
