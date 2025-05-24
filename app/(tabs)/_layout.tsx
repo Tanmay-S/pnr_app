@@ -8,10 +8,16 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { interstitialAdManager } from '@/app/services/adService';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { shouldShowTutorial } = useTutorial();
+  const { shouldShowTutorial, loading } = useTutorial();
+
+  const handleTabPress = () => {
+    // Trigger interstitial ad on tab switch
+    interstitialAdManager.onTabSwitch();
+  };
 
   return (
     <>
@@ -28,31 +34,45 @@ export default function TabLayout() {
             },
             default: {},
           }),
-        }}>
+        }}
+      >
         <Tabs.Screen
           name="index"
           options={{
             title: 'PNR Status',
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="ticket.fill" color={color} />,
           }}
+          listeners={{
+            tabPress: handleTabPress,
+          }}
         />
         <Tabs.Screen
           name="explore"
           options={{
             title: 'Trains',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="train.side.front.car" color={color} />,
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name="train.side.front.car" color={color} />
+            ),
+          }}
+          listeners={{
+            tabPress: handleTabPress,
           }}
         />
         <Tabs.Screen
           name="about"
           options={{
             title: 'About',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="info.circle.fill" color={color} />,
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name="info.circle.fill" color={color} />
+            ),
+          }}
+          listeners={{
+            tabPress: handleTabPress,
           }}
         />
       </Tabs>
-      
-      {shouldShowTutorial && <AppTutorial />}
+
+      {!loading && shouldShowTutorial && <AppTutorial />}
     </>
   );
 }

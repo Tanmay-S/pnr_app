@@ -2,33 +2,34 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Snackbar, Text } from 'react-native-paper';
 
+import { AdBanner } from '@/app/components/AdBanner';
 import { FavoriteTrains } from '@/app/components/FavoriteTrains';
 import PNRInput from '@/app/components/PNRInput';
 import PNRStatusCard from '@/app/components/PNRStatusCard';
 import RecentPNR from '@/app/components/RecentPNR';
 import { useRecentPNRSearches } from '@/app/hooks/useRecentPNRSearches';
 import { fetchPNRStatus, PNRData } from '@/app/services/pnrService';
+import { interstitialAdManager } from '@/app/services/adService';
 
 export default function PNRStatusScreen() {
   const [loading, setLoading] = useState(false);
   const [pnrData, setPnrData] = useState<PNRData | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  
-  const { 
-    recentSearches, 
-    addRecentSearch, 
-    removeRecentSearch,
-  } = useRecentPNRSearches();
+
+  const { recentSearches, addRecentSearch, removeRecentSearch } = useRecentPNRSearches();
 
   const handleCheckPNR = async (pnrNumber: string) => {
     setLoading(true);
     setErrorMessage('');
-    
+
     try {
       const data = await fetchPNRStatus(pnrNumber);
       setPnrData(data);
       addRecentSearch(pnrNumber);
+
+      // Trigger interstitial ad after PNR search
+      interstitialAdManager.onPNRSearch();
     } catch (error) {
       console.error('Error checking PNR:', error);
       setErrorMessage('Failed to fetch PNR details. Please try again.');
@@ -52,16 +53,21 @@ export default function PNRStatusScreen() {
       <PNRInput onSubmit={handleCheckPNR} isLoading={loading} />
 
       {pnrData ? (
-        <PNRStatusCard data={pnrData} />
+        <>
+          <PNRStatusCard data={pnrData} />
+          <AdBanner style={styles.adContainer} />
+        </>
       ) : (
         <FavoriteTrains onCheckPNR={() => {}} />
       )}
 
-      <RecentPNR 
-        recentSearches={recentSearches} 
+      <RecentPNR
+        recentSearches={recentSearches}
         onSelect={handleSelectRecent}
-        onDelete={removeRecentSearch} 
+        onDelete={removeRecentSearch}
       />
+
+      <AdBanner style={styles.bottomAd} />
 
       <Snackbar
         visible={snackbarVisible}
@@ -70,7 +76,8 @@ export default function PNRStatusScreen() {
         action={{
           label: 'Dismiss',
           onPress: () => setSnackbarVisible(false),
-        }}>
+        }}
+      >
         {errorMessage}
       </Snackbar>
     </ScrollView>
@@ -96,5 +103,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#555',
     marginTop: 4,
+  },
+  adContainer: {
+    marginTop: 16,
+  },
+  bottomAd: {
+    marginTop: 24,
+    marginBottom: 16,
   },
 });
